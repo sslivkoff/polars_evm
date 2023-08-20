@@ -14,7 +14,9 @@ class ExprEvm:
 
     def binary_to_hex(self, prefix: bool = True) -> pl.Expr:
         if prefix:
-            return pl.lit('0x') + self._expr.bin.encode('hex')
+            name = self._expr.meta.output_name()
+            expr = pl.lit('0x') + self._expr.bin.encode('hex')
+            return expr.alias(name)
         else:
             return self._expr.bin.encode('hex')
 
