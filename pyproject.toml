@@ -1,0 +1,22 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "polars_evm"
+readme = "README.md"
+requires-python = ">=3.7"
+dynamic = ["version", "description"]
+license = {file = "LICENSE"}
+dependencies = [
+    'pycryptodome >=3.9.1, <4',  # for keccak
+]
+
+[project.urls]
+Source = "https://github.com/sslivkoff/polars_evm"
+
+[tool.mypy]
+strict = true
+implicit_reexport = true
+files = ["polars_evm"]
+

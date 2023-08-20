@@ -1,0 +1,39 @@
+from __future__ import annotations
+
+import typing
+
+import polars as pl
+
+from .. import helpers
+
+
+@pl.api.register_expr_namespace('evm')
+class ExprEvm:
+    def __init__(self, expr: pl.Expr):
+        self._expr = expr
+
+    def binary_to_hex(self, prefix: bool = True) -> pl.Expr:
+        if prefix:
+            return pl.lit('0x') + self._expr.bin.encode('hex')
+        else:
+            return self._expr.bin.encode('hex')
+
+    def hex_to_binary(
+        self, columns: typing.Sequence[str] | None = None, prefix: bool = True
+    ) -> pl.Expr:
+        if prefix:
+            return self._expr.slice(2).str.decode('hex')
+        else:
+            return self._expr.str.decode('hex')
+
+    def keccak(
+        self,
+        output: typing.Literal[
+            'hex', 'binary', 'prefix_hex', 'raw_hex'
+        ] = 'hex',
+        text: bool = False,
+    ) -> pl.Expr:
+        return self._expr.apply(
+            lambda datum: helpers.keccak(datum, output=output, text=text)
+        )
+
