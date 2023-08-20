@@ -7,7 +7,7 @@ name = "polars_evm"
 readme = "README.md"
 requires-python = ">=3.7"
 dynamic = ["version", "description"]
-license = {file = "LICENSE"}
+license = {file = "LICENSE-APACHE"}
 dependencies = [
     'pycryptodome >=3.9.1, <4',  # for keccak
 ]
