@@ -7,6 +7,10 @@ Utilities for working with EVM data in polars
 - abi encoding [TODO]
 - rlp encoding [TODO]
 
+## Installation
+
+`pip install polars_evm`
+
 ## Usage
 
 Polars EVM adds the `evm` namespace to polars dataframes, series, and expressions. This namespace is registered to polars upon import.
