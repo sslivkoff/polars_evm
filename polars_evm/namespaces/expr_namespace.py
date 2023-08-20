@@ -4,7 +4,7 @@ import typing
 
 import polars as pl
 
-from .. import helpers
+from .. import _helpers
 
 
 @pl.api.register_expr_namespace('evm')
@@ -36,6 +36,6 @@ class ExprEvm:
         text: bool = False,
     ) -> pl.Expr:
         return self._expr.apply(
-            lambda datum: helpers.keccak(datum, output=output, text=text)
+            lambda datum: _helpers.keccak(datum, output=output, text=text)
         )
 
