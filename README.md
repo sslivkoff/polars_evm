@@ -1,11 +1,9 @@
 
 # Polars EVM
 
-Utilities for working with EVM data in polars
+Polars EVM adds the `evm` namespace to polars on dataframes, lazyframes, series, and expressions.
 
-Polars EVM adds the `evm` namespace to polars dataframes, lazyframes, series, and expressions. This namespace is registered to polars upon import.
-
-Features
+This namespace has lots of functions for processing EVM data:
 - binary ↔ hex conversions
 - keccak
 - abi encoding [TODO]
@@ -17,7 +15,7 @@ Features
 
 ## Usage
 
-Just `import polars_evm` and the `evm` namespace will be registered to polars.
+Just import `polars_evm` and then the `evm` namespace will be registered to polars.
 
 ```python
 import polars as pl
