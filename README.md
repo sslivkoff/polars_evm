@@ -88,6 +88,11 @@ pl.Expr.evm.hex_to_binary(prefix=True)
 pl.Expr.evm.keccak(output='hex', text=False)
 ```
 
+## Additional utilities
+
+Beyond the `evm` namespace, `polars_evm` has the following utilities:
+- `set_column_display_width()`: set display width so that it fully displays tx hashes in jupyter notebooks and other printouts
+
 ## TODO
 - use efficient rust implementations where possible
 - abi encoding
