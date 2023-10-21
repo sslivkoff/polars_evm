@@ -4,7 +4,6 @@ import typing
 
 import polars as pl
 
-from ctc import spec
 
 
 def prefix_hex_series_to_binary(series: pl.Series) -> pl.Series:
