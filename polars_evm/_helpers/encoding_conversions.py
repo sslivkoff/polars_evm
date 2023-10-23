@@ -5,7 +5,6 @@ import typing
 import polars as pl
 
 
-
 def prefix_hex_series_to_binary(series: pl.Series) -> pl.Series:
     return series.str.slice(2).apply(
         bytes.fromhex,
@@ -27,8 +26,8 @@ def binary_series_to_raw_hex(series: pl.Series) -> pl.Series:
 
 
 def binary_columns_to_prefix_hex(
-    df: spec.DataFrame, columns: typing.Sequence[str] | None = None
-) -> spec.DataFrame:
+    df: pl.DataFrame, columns: typing.Sequence[str] | None = None
+) -> pl.DataFrame:
     if columns is None:
         columns = df.select(pl.col(pl.datatypes.Binary)).columns
     return df.with_columns(
@@ -37,8 +36,8 @@ def binary_columns_to_prefix_hex(
 
 
 def binary_columns_to_raw_hex(
-    df: spec.DataFrame, columns: typing.Sequence[str] | None = None
-) -> spec.DataFrame:
+    df: pl.DataFrame, columns: typing.Sequence[str] | None = None
+) -> pl.DataFrame:
     if columns is None:
         columns = df.select(pl.col(pl.datatypes.Binary)).columns
     return df.with_columns(
@@ -47,8 +46,8 @@ def binary_columns_to_raw_hex(
 
 
 def prefix_hex_columns_to_binary(
-    df: spec.DataFrame, columns: typing.Sequence[str] | None = None
-) -> spec.DataFrame:
+    df: pl.DataFrame, columns: typing.Sequence[str] | None = None
+) -> pl.DataFrame:
     if columns is None:
         columns = []
         for column, dtype in zip(df.columns, df.dtypes):
@@ -64,8 +63,8 @@ def prefix_hex_columns_to_binary(
 
 
 def raw_hex_columns_to_binary(
-    df: spec.DataFrame, columns: typing.Sequence[str] | None = None
-) -> spec.DataFrame:
+    df: pl.DataFrame, columns: typing.Sequence[str] | None = None
+) -> pl.DataFrame:
     if columns is None:
         columns = []
         for column, dtype in zip(df.columns, df.dtypes):
