@@ -6,14 +6,14 @@ import polars as pl
 
 
 def prefix_hex_series_to_binary(series: pl.Series) -> pl.Series:
-    return series.str.slice(2).apply(
+    return series.str.slice(2).map_elements(
         bytes.fromhex,
         return_dtype=pl.datatypes.Binary,
     )
 
 
 def raw_hex_series_to_binary(series: pl.Series) -> pl.Series:
-    return series.apply(bytes.fromhex, return_dtype=pl.datatypes.Binary)
+    return series.map_elements(bytes.fromhex, return_dtype=pl.datatypes.Binary)
 
 
 def binary_series_to_prefix_hex(series: pl.Series) -> pl.Series:

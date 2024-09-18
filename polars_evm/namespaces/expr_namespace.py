@@ -35,7 +35,7 @@ class ExprEvm:
         ] = 'hex',
         text: bool = False,
     ) -> pl.Expr:
-        return self._expr.apply(
+        return self._expr.map_elements(
             lambda datum: _helpers.keccak(datum, output=output, text=text)
         )
 
