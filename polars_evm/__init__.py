@@ -4,4 +4,4 @@ from . import namespaces
 from ._helpers.formatting import set_column_display_width
 
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
