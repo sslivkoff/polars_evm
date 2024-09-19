@@ -31,7 +31,7 @@ class SeriesEvm:
         ] = 'hex',
         text: bool = False,
     ) -> pl.Series:
-        return self._series.apply(
+        return self._series.map_elements(
             lambda datum: _helpers.keccak(datum, output=output, text=text)
         )
 
