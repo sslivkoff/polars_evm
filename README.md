@@ -5,9 +5,8 @@ Polars EVM adds the `evm` namespace to polars on dataframes, lazyframes, series,
 
 This namespace has lots of functions for processing EVM data:
 - binary ↔ hex conversions
+- binary → float conversions (`u256`, `i256`, etc)
 - keccak
-- abi encoding [TODO]
-- rlp encoding [TODO]
 
 ## Installation
 
@@ -36,7 +35,7 @@ balances = [
 df = pl.DataFrame({'address': addresses, 'balance': balances})
 
 print('converted dataframe:')
-print(df.evm.binary_to_float({'balance': 'u256'}).evm.binary_to_hex())
+print(df.evm.binary_to_float({'balance': 'u256'}, replace=True).evm.binary_to_hex())
 print()
 print('using expressions:')
 print(df.select(pl.col.address.evm.binary_to_hex(), pl.col.balance.evm.binary_to_float('u256')))
@@ -48,33 +47,45 @@ print('float series:', df['balance'].evm.binary_to_float('u256'))
 
 output:
 ```bash
+converted dataframe:
+shape: (3, 2)
+┌────────────────────────────────────────────┬───────────┐
+│ address                                    ┆ balance   │
+│ ---                                        ┆ ---       │
+│ str                                        ┆ f64       │
+╞════════════════════════════════════════════╪═══════════╡
+│ 0xdac17f958d2ee523a2206206994597c13d831ec7 ┆ 5.3665e18 │
+│ 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 ┆ 1.3117e17 │
+│ 0x5f98805a4e8be255a32880fdec7f6728c6568ba0 ┆ 1.0000e17 │
+└────────────────────────────────────────────┴───────────┘
+
+using expressions:
+shape: (3, 2)
+┌────────────────────────────────────────────┬───────────┐
+│ address                                    ┆ balance   │
+│ ---                                        ┆ ---       │
+│ str                                        ┆ f64       │
+╞════════════════════════════════════════════╪═══════════╡
+│ 0xdac17f958d2ee523a2206206994597c13d831ec7 ┆ 5.3665e18 │
+│ 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 ┆ 1.3117e17 │
+│ 0x5f98805a4e8be255a32880fdec7f6728c6568ba0 ┆ 1.0000e17 │
+└────────────────────────────────────────────┴───────────┘
+
+using series:
 hex series: shape: (3,)
 Series: 'address' [str]
 [
-        "0xdac17f958d2e…
-        "0xa0b86991c621…
-        "0x5f98805a4e8b…
+        "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        "0x5f98805a4e8be255a32880fdec7f6728c6568ba0"
 ]
-hex df: shape: (3, 1)
-┌───────────────────────────────────┐
-│ address                           │
-│ ---                               │
-│ str                               │
-╞═══════════════════════════════════╡
-│ 0xdac17f958d2ee523a2206206994597… │
-│ 0xa0b86991c6218b36c1d19d4a2e9eb0… │
-│ 0x5f98805a4e8be255a32880fdec7f67… │
-└───────────────────────────────────┘
-hex expr: shape: (3, 1)
-┌───────────────────────────────────┐
-│ literal                           │
-│ ---                               │
-│ str                               │
-╞═══════════════════════════════════╡
-│ 0xdac17f958d2ee523a2206206994597… │
-│ 0xa0b86991c6218b36c1d19d4a2e9eb0… │
-│ 0x5f98805a4e8be255a32880fdec7f67… │
-└───────────────────────────────────┘
+float series: shape: (3,)
+Series: 'balance' [f64]
+[
+        5.3665e18
+        1.3117e17
+        1.0000e17
+]
 ```
 
 ## List of namespace entries
