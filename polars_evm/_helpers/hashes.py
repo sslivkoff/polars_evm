@@ -8,7 +8,6 @@ def keccak(
     output: typing.Literal['hex', 'binary', 'prefix_hex', 'raw_hex'] = 'hex',
     text: bool = False,
 ) -> str | bytes:
-
     from Crypto.Hash import keccak as f_keccak
 
     # encode text as bytes
@@ -39,4 +38,3 @@ def keccak(
         return '0x' + as_binary.hex()
     else:
         raise Exception('unknown output format: ' + str(output))
-

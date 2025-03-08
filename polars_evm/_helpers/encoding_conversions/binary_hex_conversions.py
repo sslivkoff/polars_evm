@@ -77,4 +77,3 @@ def raw_hex_columns_to_binary(
     return df.with_columns(
         [raw_hex_series_to_binary(df[column]) for column in columns]
     )
-

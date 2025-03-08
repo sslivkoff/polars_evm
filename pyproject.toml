@@ -20,3 +20,8 @@ strict = true
 implicit_reexport = true
 files = ["polars_evm"]
 
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.format]
+quote-style = "single"
