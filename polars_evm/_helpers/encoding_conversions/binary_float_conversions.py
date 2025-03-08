@@ -101,7 +101,7 @@ def _raw_hex_to_float(
     exprs = []
     while n_remaining > 0:
         chunk_start = int((n_bits - n_remaining) / 8)
-        chunk_size = min(8, n_remaining)
+        chunk_size = int(min(8, n_remaining / 8))
         expr = _float_chunk(
             chunk_start,
             chunk_size,
@@ -130,11 +130,12 @@ def _float_chunk(
     if n_chunk_bytes > 8:
         raise Exception('n_chunk_bytes must be <= 8')
 
-    expr = (
-        hex_expr.str.slice(2 * start_byte, 2 * n_chunk_bytes)
-        .str.decode('hex')
-        .bin.reinterpret(dtype=pl.UInt64, endianness='big')
+    expr = hex_expr.str.slice(2 * start_byte, 2 * n_chunk_bytes).str.decode(
+        'hex'
     )
+    if n_chunk_bytes < 8:
+        expr = b'\x00' * (8 - n_chunk_bytes) + expr
+    expr = expr.bin.reinterpret(dtype=pl.UInt64, endianness='big')
 
     if invert:
         max_value = 2 ** int(8 * n_chunk_bytes) - 1
