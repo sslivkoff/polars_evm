@@ -15,44 +15,16 @@ class LazyFrameEvm:
     def binary_to_hex(
         self, columns: typing.Sequence[str] | None = None, prefix: bool = True
     ) -> pl.LazyFrame:
-        if columns is None:
-            columns = []
-            for column, dtype in zip(self._lf.columns, self._lf.dtypes):
-                if dtype == pl.datatypes.Binary:
-                    columns.append(column)
-
-        if prefix:
-            return self._lf.with_columns(
-                [
-                    pl.lit('0x') + pl.col(column).bin.encode('hex')
-                    for column in columns
-                ]
-            )
-        else:
-            return self._lf.with_columns(
-                [pl.col(column).bin.encode('hex') for column in columns]
-            )
+        return _helpers.binary_df_to_hex(
+            self._lf, columns=columns, prefix=prefix
+        )
 
     def hex_to_binary(
         self, columns: typing.Sequence[str] | None = None, prefix: bool = True
     ) -> pl.LazyFrame:
-        if columns is None:
-            columns = []
-            for column, dtype in zip(self._lf.columns, self._lf.dtypes):
-                if dtype == pl.datatypes.Binary:
-                    columns.append(column)
-
-        if prefix:
-            return self._lf.with_columns(
-                [
-                    pl.col(column).slice(2).str.decode('hex')
-                    for column in columns
-                ]
-            )
-        else:
-            return self._lf.with_columns(
-                [pl.col(column).str.decode('hex') for column in columns]
-            )
+        return _helpers.binary_df_to_hex(
+            self._lf, columns=columns, prefix=prefix
+        )
 
     def binary_to_float(
         self,

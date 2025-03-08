@@ -13,16 +13,10 @@ class SeriesEvm:
         self._series = series
 
     def binary_to_hex(self, prefix: bool = True) -> pl.Series:
-        if prefix:
-            return _helpers.binary_series_to_prefix_hex(self._series)
-        else:
-            return _helpers.binary_series_to_raw_hex(self._series)
+        return _helpers.binary_series_to_hex(self._series, prefix=prefix)
 
-    def hex_to_binary(self, prefix: bool = True) -> pl.Series:
-        if prefix:
-            return _helpers.prefix_hex_series_to_binary(self._series)
-        else:
-            return _helpers.raw_hex_series_to_binary(self._series)
+    def hex_to_binary(self, prefix: bool | None = None) -> pl.Series:
+        return _helpers.hex_series_to_binary(self._series, prefix=prefix)
 
     def binary_to_float(self, raw_type: str) -> pl.Seties:
         return _helpers.binary_series_to_float(
