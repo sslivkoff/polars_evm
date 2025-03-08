@@ -27,12 +27,23 @@ addresses = [
     b'_\x98\x80ZN\x8b\xe2U\xa3(\x80\xfd\xec\x7fg(\xc6V\x8b\xa0'
 ]
 
-series = pl.Series('address', addresses)
-df = pl.DataFrame(series)
+balances = [
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Jy\xb0\x9aq\x1e\xd1(",
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xd1\xff\xf7\xfb\xa8O\x87",
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01cEx]\x8a\x00\x00",
+]
 
-print('hex series:', series.evm.binary_to_hex())
-print('hex df:', df.evm.binary_to_hex())
-print('hex expr:', df.select(pl.col('address').evm.binary_to_hex()))
+df = pl.DataFrame({'address': addresses, 'balance': balances})
+
+print('converted dataframe:')
+print(df.evm.binary_to_float({'balance': 'u256'}).evm.binary_to_hex())
+print()
+print('using expressions:')
+print(df.select(pl.col.address.evm.binary_to_hex(), pl.col.balance.evm.binary_to_float('u256')))
+print()
+print('using series:')
+print('hex series:', df['address'].evm.binary_to_hex())
+print('float series:', df['balance'].evm.binary_to_float('u256'))
 ```
 
 output:
@@ -72,19 +83,23 @@ hex expr: shape: (3, 1)
 # DataFrame namespace
 df.evm.binary_to_hex(prefix=True, columns=None)
 df.evm.hex_to_binary(prefix=True, columns=None)
+df.evm.binary_to_float({'column1': 'u256', 'column2': 'i256'}, replace=False, prefix=True)
 
 # LazyFrame namespace
 lf.evm.binary_to_hex(prefix=True, columns=None)
 lf.evm.hex_to_binary(prefix=True, columns=None)
+lf.evm.binary_to_float({'column1': 'u256', 'column2': 'i256'}, replace=False, prefix=True)
 
 # Series namespace
 series.evm.binary_to_hex(prefix=True)
 series.evm.hex_to_binary(prefix=True)
+series.evm.binary_to_float('u256')
 series.evm.keccak(output='hex', text=False)
 
 # Expression namespace
 pl.Expr.evm.binary_to_hex(prefix=True)
 pl.Expr.evm.hex_to_binary(prefix=True)
+pl.Expr.binary_to_float('u256')
 pl.Expr.evm.keccak(output='hex', text=False)
 ```
 
