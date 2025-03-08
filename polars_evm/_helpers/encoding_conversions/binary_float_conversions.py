@@ -13,7 +13,6 @@ def binary_df_to_float(
     column_types: dict[str, str],
     replace: bool = False,
 ) -> T:
-    # ) -> pl.DataFrame:
     """column_types in format {'col1': 'u256', 'col2': 'i128', ...}"""
     import polars as pl
 
@@ -29,7 +28,7 @@ def binary_df_to_float(
         elif column_dtype == pl.String:
             hex_name = column
             hex_columns = {}
-            hex_expr = pl.col(hex_name)
+            hex_expr = pl.col(hex_name).str.strip_prefix('0x')
         else:
             raise Exception('invalid column dtype:' + str(column_dtype))
 
