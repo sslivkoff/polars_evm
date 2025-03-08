@@ -5,12 +5,15 @@ import typing
 if typing.TYPE_CHECKING:
     import polars as pl
 
+    T = typing.TypeVar('T', pl.DataFrame, pl.LazyFrame)
 
-def binary_to_float(
-    df: pl.DataFrame,
+
+def binary_df_to_float(
+    df: T,
     column_types: dict[str, str],
     replace: bool = False,
-) -> pl.DataFrame:
+) -> T:
+    # ) -> pl.DataFrame:
     """column_types in format {'col1': 'u256', 'col2': 'i128', ...}"""
     import polars as pl
 
@@ -21,7 +24,7 @@ def binary_to_float(
         column_dtype = df.collect_schema().get(column)
         if column_dtype == pl.Binary:
             hex_name = column + '_hex_tmp'
-            hex_columns[hex_name] = pl.col(column).bin.encode("hex")
+            hex_columns[hex_name] = pl.col(column).bin.encode('hex')
             hex_expr = pl.col(hex_name)
         elif column_dtype == pl.String:
             hex_name = column
@@ -56,7 +59,7 @@ def binary_series_to_float(hex_series: pl.Series, raw_type: str) -> pl.Series:
         name = 'series'
 
     df = pl.DataFrame({name: hex_series})
-    df = binary_to_float(df, {name: raw_type}, replace=True)
+    df = binary_df_to_float(df, {name: raw_type}, replace=True)
     return df[name]
 
 
@@ -65,16 +68,16 @@ def hex_expr_to_float(hex_expr: pl.Expr, raw_type: str) -> pl.Expr:
 
     # parse raw type
     raw_type = raw_type.lower()
-    if raw_type.startswith("uint"):
+    if raw_type.startswith('uint'):
         signed = False
         n_bits = int(raw_type[4:])
-    elif raw_type.startswith("u"):
+    elif raw_type.startswith('u'):
         signed = False
         n_bits = int(raw_type[1:])
-    elif raw_type.startswith("int"):
+    elif raw_type.startswith('int'):
         signed = True
         n_bits = int(raw_type[3:])
-    elif raw_type.startswith("i"):
+    elif raw_type.startswith('i'):
         signed = True
         n_bits = int(raw_type[1:])
     else:
@@ -126,12 +129,12 @@ def _float_chunk(
     import polars as pl
 
     if n_chunk_bytes > 8:
-        raise Exception("n_chunk_bytes must be <= 8")
+        raise Exception('n_chunk_bytes must be <= 8')
 
     expr = (
         hex_expr.str.slice(2 * start_byte, 2 * n_chunk_bytes)
-        .str.decode("hex")
-        .bin.reinterpret(dtype=pl.UInt64, endianness="big")
+        .str.decode('hex')
+        .bin.reinterpret(dtype=pl.UInt64, endianness='big')
     )
 
     if invert:
@@ -142,4 +145,3 @@ def _float_chunk(
     expr = expr.cast(pl.Float64) * (2**factor)
 
     return expr
-

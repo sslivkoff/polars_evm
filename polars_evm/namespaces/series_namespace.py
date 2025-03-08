@@ -24,6 +24,11 @@ class SeriesEvm:
         else:
             return _helpers.raw_hex_series_to_binary(self._series)
 
+    def binary_to_float(self, raw_type: str) -> pl.Seties:
+        return _helpers.binary_series_to_float(
+            hex_series=self._series, raw_type=raw_type
+        )
+
     def keccak(
         self,
         output: typing.Literal[
@@ -34,4 +39,3 @@ class SeriesEvm:
         return self._series.map_elements(
             lambda datum: _helpers.keccak(datum, output=output, text=text)
         )
-

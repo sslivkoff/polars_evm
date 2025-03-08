@@ -28,6 +28,9 @@ class ExprEvm:
         else:
             return self._expr.str.decode('hex')
 
+    def hex_to_float(self, raw_type: str) -> pl.Expr:
+        return _helpers.hex_expr_to_float(self._expr, raw_type=raw_type)
+
     def keccak(
         self,
         output: typing.Literal[
@@ -38,4 +41,3 @@ class ExprEvm:
         return self._expr.map_elements(
             lambda datum: _helpers.keccak(datum, output=output, text=text)
         )
-

@@ -4,6 +4,8 @@ import typing
 
 import polars as pl
 
+from .. import _helpers
+
 
 @pl.api.register_lazyframe_namespace('evm')
 class LazyFrameEvm:
@@ -52,3 +54,11 @@ class LazyFrameEvm:
                 [pl.col(column).str.decode('hex') for column in columns]
             )
 
+    def binary_to_float(
+        self,
+        column_types: dict[str, str],
+        replace: bool = False,
+    ) -> pl.LazyFrame:
+        return _helpers.binary_df_to_float(
+            df=self._lf, column_types=column_types, replace=replace
+        )

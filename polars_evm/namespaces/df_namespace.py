@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import polars as pl
-
 import typing
+
+import polars as pl
 
 from .. import _helpers
 
@@ -32,3 +32,11 @@ class DataFrameEvm:
         else:
             return _helpers.raw_hex_columns_to_binary(self._df, columns=columns)
 
+    def binary_to_float(
+        self,
+        column_types: dict[str, str],
+        replace: bool = False,
+    ) -> pl.DataFrame:
+        return _helpers.binary_df_to_float(
+            df=self._df, column_types=column_types, replace=replace
+        )
