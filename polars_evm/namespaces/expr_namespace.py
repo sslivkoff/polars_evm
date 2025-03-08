@@ -18,6 +18,11 @@ class ExprEvm:
     def hex_to_binary(self, prefix: bool = True) -> pl.Expr:
         return _helpers.hex_expr_to_binary(self._expr, prefix=prefix)
 
+    def binary_to_float(self, raw_type: str) -> pl.Expr:
+        return _helpers.hex_expr_to_float(
+            self._expr.bin.encode('hex'), raw_type=raw_type
+        )
+
     def hex_to_float(self, raw_type: str) -> pl.Expr:
         return _helpers.hex_expr_to_float(self._expr, raw_type=raw_type)
 
@@ -31,3 +36,4 @@ class ExprEvm:
         return self._expr.map_elements(
             lambda datum: _helpers.keccak(datum, output=output, text=text)
         )
+
