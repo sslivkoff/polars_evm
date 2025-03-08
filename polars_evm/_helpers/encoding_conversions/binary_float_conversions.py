@@ -114,7 +114,7 @@ def _raw_hex_to_float(
         n_remaining -= 8 * chunk_size
     expr = sum(exprs)  # type: ignore
     if invert:
-        expr = -expr
+        expr = -expr - 1
     return expr
 
 
