@@ -112,6 +112,7 @@ def _raw_hex_to_float(
         exprs.append(expr)
         n_remaining -= 8 * chunk_size
     expr = sum(exprs)  # type: ignore
+    expr = expr.alias(exprs[0].meta.output_name())
     if invert:
         expr = -expr - 1
     return expr
