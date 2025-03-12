@@ -32,3 +32,19 @@ class DataFrameEvm:
         return _helpers.binary_df_to_float(
             df=self._df, column_types=column_types, replace=replace
         )
+
+    def decode_events(
+        self,
+        event_abi: dict[str, typing.Any],
+        *,
+        columns: list[str] | None = None,
+        drop_raw_columns: bool = True,
+        name_prefix: str | None = None,
+    ) -> pl.DataFrame:
+        return _helpers.decode_events(
+            events=self._df,
+            event_abi=event_abi,
+            columns=columns,
+            drop_raw_columns=drop_raw_columns,
+            name_prefix=name_prefix,
+        )
