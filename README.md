@@ -6,6 +6,7 @@ Polars EVM adds the `evm` namespace to polars on dataframes, lazyframes, series,
 This namespace has lots of functions for processing EVM data:
 - binary ↔ hex conversions
 - binary → float conversions (`u256`, `i256`, etc)
+- event decoding
 - keccak
 
 ## Installation
@@ -34,20 +35,22 @@ balances = [
 
 df = pl.DataFrame({'address': addresses, 'balance': balances})
 
-print('converted dataframe:')
+print('perform conversions on dataframe:')
 print(df.evm.binary_to_float({'balance': 'u256'}, replace=True).evm.binary_to_hex())
 print()
-print('using expressions:')
+print('perform conversions using expressions:')
 print(df.select(pl.col.address.evm.binary_to_hex(), pl.col.balance.evm.binary_to_float('u256')))
 print()
-print('using series:')
+print('perform binary to hex conversion on series:')
 print('hex series:', df['address'].evm.binary_to_hex())
+print()
+print('perform binary to float conversion on series:')
 print('float series:', df['balance'].evm.binary_to_float('u256'))
 ```
 
 output:
 ```bash
-converted dataframe:
+perform conversions on dataframe:
 shape: (3, 2)
 ┌────────────────────────────────────────────┬───────────┐
 │ address                                    ┆ balance   │
@@ -59,7 +62,7 @@ shape: (3, 2)
 │ 0x5f98805a4e8be255a32880fdec7f6728c6568ba0 ┆ 1.0000e17 │
 └────────────────────────────────────────────┴───────────┘
 
-using expressions:
+perform conversions using expressions:
 shape: (3, 2)
 ┌────────────────────────────────────────────┬───────────┐
 │ address                                    ┆ balance   │
@@ -71,7 +74,7 @@ shape: (3, 2)
 │ 0x5f98805a4e8be255a32880fdec7f6728c6568ba0 ┆ 1.0000e17 │
 └────────────────────────────────────────────┴───────────┘
 
-using series:
+perform binary to hex conversion on series:
 hex series: shape: (3,)
 Series: 'address' [str]
 [
@@ -79,6 +82,8 @@ Series: 'address' [str]
         "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
         "0x5f98805a4e8be255a32880fdec7f6728c6568ba0"
 ]
+
+perform binary to float conversion on series:
 float series: shape: (3,)
 Series: 'balance' [f64]
 [
@@ -95,6 +100,7 @@ Series: 'balance' [f64]
 df.evm.binary_to_hex(prefix=True, columns=None)
 df.evm.hex_to_binary(prefix=True, columns=None)
 df.evm.binary_to_float({'column1': 'u256', 'column2': 'i256'}, replace=False, prefix=True)
+df.evm.decode_events(event_abi)
 
 # LazyFrame namespace
 lf.evm.binary_to_hex(prefix=True, columns=None)
