@@ -79,7 +79,7 @@ def decode_events(
         drop = ['topic0', 'topic1', 'topic2', 'topic3', 'data']
 
     return (
-        events.filter(_get_event_filters(event_abi))
+        events.filter(_get_event_filters(schema, event_abi))
         .with_columns(**temp_exprs)
         .with_columns(**column_exprs)
         .drop(*temp_exprs.keys(), *drop)
@@ -92,7 +92,9 @@ def get_event_hash(event_abi: dict[str, typing.Any]) -> str:
     return ctc.get_event_hash(event_abi)  # type: ignore
 
 
-def _get_event_filters(event_abi: dict[str, typing.Any]) -> list[pl.Expr]:
+def _get_event_filters(
+    schema: pl.Schema, event_abi: dict[str, typing.Any]
+) -> list[pl.Expr]:
     import polars as pl
 
     n_indexed_columns = 0
@@ -106,8 +108,13 @@ def _get_event_filters(event_abi: dict[str, typing.Any]) -> list[pl.Expr]:
     filters = []
 
     # topic0 filter
-    topic0 = bytes.fromhex(get_event_hash(event_abi)[2:])
-    filters.append(pl.col.topic0 == topic0)
+    event_hash = get_event_hash(event_abi)[2:]
+    if schema.get('topic0') == pl.String:
+        filters.append(
+            pl.col.topic0.str.strip_prefix('0x') == pl.lit(event_hash)
+        )
+    else:
+        filters.append(pl.col.topic0 == bytes.fromhex(event_hash))
 
     # null checks
     if n_indexed_columns == 0:
