@@ -40,6 +40,7 @@ class DataFrameEvm:
         columns: list[str] | None = None,
         drop_raw_columns: bool = True,
         name_prefix: str | None = None,
+        hex_output: bool = True,
     ) -> pl.DataFrame:
         return _helpers.decode_events(
             events=self._df,
@@ -47,4 +48,5 @@ class DataFrameEvm:
             columns=columns,
             drop_raw_columns=drop_raw_columns,
             name_prefix=name_prefix,
+            hex_output=hex_output,
         )

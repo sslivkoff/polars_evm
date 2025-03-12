@@ -17,6 +17,7 @@ def decode_events(
     columns: list[str] | None = None,
     drop_raw_columns: bool = True,
     name_prefix: str | None = None,
+    hex_output: bool = True,
 ) -> T:
     import polars as pl
 
@@ -63,6 +64,7 @@ def decode_events(
             abi_type=input_abis[column]['type'],
             padded=padded,
             prefix=prefix,
+            hex_output=hex_output,
         )
 
     # insert prefix

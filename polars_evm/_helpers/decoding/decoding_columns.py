@@ -10,7 +10,12 @@ from . import decoding_types
 
 
 def decode_hex(
-    expr: pl.Expr, abi_type: str, *, padded: bool = True, prefix: bool = True
+    expr: pl.Expr,
+    abi_type: str,
+    *,
+    padded: bool = True,
+    prefix: bool = True,
+    hex_output: bool = True,
 ) -> pl.Expr:
     """
     dynamic types not yet implemented
@@ -45,7 +50,10 @@ def decode_hex(
     elif abi_type == 'bytes':
         raise NotImplementedError('bytes')
     elif abi_type == 'address':
-        return expr
+        if hex_output:
+            return '0x' + expr
+        else:
+            return expr.str.decode('hex')
     elif abi_type == 'boolean':
         return expr.str.slice(-1) != '0'
     elif abi_type.startswith('int'):
@@ -53,7 +61,10 @@ def decode_hex(
     elif abi_type.startswith('uint'):
         return _decode_hex_unsigned_int(expr, abi_type)
     elif abi_type.startswith('bytes'):
-        return expr
+        if hex_output:
+            return '0x' + expr
+        else:
+            return expr.str.decode('hex')
     elif abi_type.startswith('fixed'):
         _, _, scale = abi_type[5:].split('x')
         as_float = decode_hex(expr, 'int' + str(n_bits), padded=padded)
@@ -63,10 +74,16 @@ def decode_hex(
         as_float = decode_hex(expr, 'uint' + str(n_bits), padded=padded)
         return as_float / (10 ** pl.lit(int(scale)))
     elif abi_type == 'function':
-        return pl.struct(
-            address=expr.str.slice(-48, 40),
-            selector=expr.str.slice(-8, 8),
-        )
+        if hex_output:
+            return pl.struct(
+                address='0x' + expr.str.slice(-48, 40),
+                selector='0x' + expr.str.slice(-8, 8),
+            )
+        else:
+            return pl.struct(
+                address=expr.str.slice(-48, 40).str.decode('hex'),
+                selector=expr.str.slice(-8, 8).str.decode('hex'),
+            )
     else:
         raise Exception()
 
