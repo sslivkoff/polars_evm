@@ -36,4 +36,3 @@ class ExprEvm:
         return self._expr.map_elements(
             lambda datum: _helpers.keccak(datum, output=output, text=text)
         )
-

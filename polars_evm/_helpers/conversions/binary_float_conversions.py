@@ -84,7 +84,7 @@ def hex_expr_to_float(hex_expr: pl.Expr, raw_type: str) -> pl.Expr:
 
     # build expression based on whether type is signed
     if signed:
-        is_negative = hex_expr.str.slice(0, 2) > '7f'
+        is_negative = hex_expr.str.slice(0, 2).str.to_lowercase() > '7f'
         negative = _raw_hex_to_float(hex_expr, n_bits=n_bits, invert=True)
         positive = _raw_hex_to_float(hex_expr, n_bits=n_bits, invert=False)
         return pl.when(is_negative).then(negative).otherwise(positive)
