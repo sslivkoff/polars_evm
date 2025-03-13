@@ -26,6 +26,22 @@ class ExprEvm:
     def hex_to_float(self, raw_type: str) -> pl.Expr:
         return _helpers.hex_expr_to_float(self._expr, raw_type=raw_type)
 
+    def decode_hex(
+        self,
+        abi_type: str,
+        *,
+        padded: bool = True,
+        prefix: bool = True,
+        hex_output: bool = True,
+    ) -> pl.Expr:
+        return _helpers.decode_hex(
+            self._expr,
+            abi_type=abi_type,
+            padded=padded,
+            prefix=prefix,
+            hex_output=hex_output,
+        )
+
     def keccak(
         self,
         output: typing.Literal[
