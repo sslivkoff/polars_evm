@@ -50,3 +50,17 @@ class DataFrameEvm:
             name_prefix=name_prefix,
             hex_output=hex_output,
         )
+
+    def decode_transactions(
+        self,
+        *,
+        function_abi: dict[str, typing.Any] | None = None,
+        contract_abi: list[dict[str, typing.Any]] | None = None,
+        ignore_unknown: bool = False,
+    ) -> pl.DataFrame | dict[str, pl.DataFrame]:
+        return _helpers.decode_transactions(
+            transactions=self._df,
+            function_abi=function_abi,
+            contract_abi=contract_abi,
+            ignore_unknown=ignore_unknown,
+        )
