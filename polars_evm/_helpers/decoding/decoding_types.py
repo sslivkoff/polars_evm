@@ -43,6 +43,7 @@ def parse_abi_type(abi_type: str) -> AbiType:
         if not abi_type.endswith('[]'):
             array_length = int(abi_type.rsplit('[', maxsplit=1)[1][:-1])
         array_type = parse_abi_type(abi_type.rsplit('[', maxsplit=1)[0])
+        static = array_type['static']
     elif abi_type.endswith(')'):
         tuple_names, tuple_types = _parse_tuple_type(abi_type)
         static = all(subtype['static'] for subtype in tuple_types)
@@ -65,11 +66,11 @@ def parse_abi_type(abi_type: str) -> AbiType:
     elif abi_type.startswith('bytes'):
         n_bits = int(abi_type[5:]) * 8
     elif abi_type.startswith('fixed'):
-        _, n_bits_str, fixed_scale_str = abi_type[5:].split('x')
+        n_bits_str, fixed_scale_str = abi_type[5:].split('x')
         n_bits = int(n_bits_str)
         fixed_scale = int(fixed_scale_str)
     elif abi_type.startswith('ufixed'):
-        _, n_bits_str, fixed_scale_str = abi_type[6:].split('x')
+        n_bits_str, fixed_scale_str = abi_type[6:].split('x')
         n_bits = int(n_bits_str)
         fixed_scale = int(fixed_scale_str)
     elif abi_type == 'function':
