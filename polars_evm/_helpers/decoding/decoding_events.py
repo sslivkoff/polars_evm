@@ -59,7 +59,7 @@ def decode_events(
             expr = expr.str.slice(64 * unindexed.index(column), 64)
 
         # decode column expression
-        column_exprs[column] = decoding_columns.decode_hex(
+        column_exprs[column] = decoding_columns.decode_hex_expr(
             expr=expr,
             abi_type=input_abis[column]['type'],
             padded=padded,

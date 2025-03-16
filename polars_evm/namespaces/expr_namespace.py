@@ -34,7 +34,7 @@ class ExprEvm:
         prefix: bool = True,
         hex_output: bool = True,
     ) -> pl.Expr:
-        return _helpers.decode_hex(
+        return _helpers.decode_hex_expr(
             self._expr,
             abi_type=abi_type,
             padded=padded,

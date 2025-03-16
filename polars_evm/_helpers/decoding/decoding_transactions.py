@@ -75,7 +75,7 @@ def _decode_transactions_function_abi(
 
     cols = {}
     for i, input in enumerate(function_abi['inputs']):
-        cols[input['name']] = decoding_columns.decode_hex(
+        cols[input['name']] = decoding_columns.decode_hex_expr(
             pl.col.input_hex.str.slice(64 * i, 64),
             input['type'],
             padded=True,

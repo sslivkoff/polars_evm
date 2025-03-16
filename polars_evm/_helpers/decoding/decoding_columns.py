@@ -9,7 +9,7 @@ from .. import conversions
 from . import decoding_types
 
 
-def decode_hex(
+def decode_hex_expr(
     expr: pl.Expr,
     abi_type: str | decoding_types.AbiType,
     *,
@@ -59,12 +59,16 @@ def decode_hex(
     elif type_name.startswith('bytes'):
         return _format_binary(expr, hex_output)
     elif type_name.startswith('fixed'):
-        f64 = decode_hex(expr, 'int' + str(abi_type['n_bits']), padded=padded)
+        f64 = decode_hex_expr(
+            expr, 'int' + str(abi_type['n_bits']), padded=padded
+        )
         if abi_type['fixed_scale'] is None:
             raise Exception('must specify fixed_scale')
         return f64 / (10 ** pl.lit(int(abi_type['fixed_scale'])))
     elif type_name.startswith('ufixed'):
-        f64 = decode_hex(expr, 'uint' + str(abi_type['n_bits']), padded=padded)
+        f64 = decode_hex_expr(
+            expr, 'uint' + str(abi_type['n_bits']), padded=padded
+        )
         if abi_type['fixed_scale'] is None:
             raise Exception('must specify fixed_scale')
         return f64 / (10 ** pl.lit(int(abi_type['fixed_scale'])))
@@ -105,11 +109,13 @@ def _decode_array(
                     tail_length = expr.str.slice(offset)
                     offset += 1
                 tail_body = expr.str.slice(offset * 2, tail_length * 2)
-                subexpr = decode_hex(tail_body, subtype, hex_output=hex_output)
+                subexpr = decode_hex_expr(
+                    tail_body, subtype, hex_output=hex_output
+                )
                 exprs.append(subexpr)
         else:
             exprs = [
-                decode_hex(
+                decode_hex_expr(
                     expr.slice(i * 64, 64), subtype, hex_output=hex_output
                 )
                 for i in range(abi_type['array_length'])
@@ -135,7 +141,7 @@ def _decode_tuple(
         if name is None:
             name = 'field' + str(i)
         if not subtype['has_tail']:
-            field = decode_hex(
+            field = decode_hex_expr(
                 expr=expr.str.slice(i * 64, 64),
                 abi_type=subtype,
                 padded=True,
@@ -145,7 +151,7 @@ def _decode_tuple(
         else:
             offset = _hex_to_int(expr.str.slice(i * 64, 64), pl.UInt64)
             tail_length = _hex_to_int(expr.str.slice(offset * 2, 64), pl.UInt64)
-            field = decode_hex(
+            field = decode_hex_expr(
                 expr=expr.str.slice((offset + 1) * 2, tail_length * 2),
                 abi_type=subtype,
                 padded=True,
