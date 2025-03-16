@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing
 import pytest
+import itertools
 from polars_evm._helpers.decoding.decoding_types import parse_abi_type
 
 if typing.TYPE_CHECKING:
@@ -85,8 +86,39 @@ for name, abi_type in list(abi_types.items()):
         'has_tail': True,
     }
 
+# set defaults
+for name, abi_type in list(abi_types.items()):
+    abi_types[name] = defaults.copy()
+    abi_types[name].update(abi_type)
+
 # tuples
-# raise NotImplementedError()
+piece_sets = [
+    ('int32',),
+    ('int32', 'int64'),
+    ('int32', 'int64[]', 'bytes32'),
+]
+for subtypes in piece_sets:
+    combos = itertools.product(
+        *[[None, 'name' + str(i)] for i in range(len(subtypes))]
+    )
+    for names in combos:
+        tuple_name = '('
+        for subname, subtype in zip(names, subtypes):
+            if len(tuple_name) > 1:
+                tuple_name += ','
+            if subname is None:
+                tuple_name += subtype
+            else:
+                tuple_name += subtype + ' ' + subname
+        tuple_name += ')'
+        tuple_types = [abi_types[subtype] for subtype in subtypes]
+
+        abi_types[tuple_name] = {
+            'name': tuple_name,
+            'static': all(tuple_type['static'] for tuple_type in tuple_types),
+            'tuple_names': list(names),
+            'tuple_types': tuple_types,
+        }
 
 
 # set defaults
