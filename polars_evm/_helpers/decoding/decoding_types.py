@@ -47,7 +47,6 @@ def parse_abi_type(abi_type: str) -> AbiType:
     elif abi_type.endswith(')'):
         tuple_names, tuple_types = _parse_tuple_type(abi_type)
         static = all(subtype['static'] for subtype in tuple_types)
-    elif abi_type.endswith(')'):
         has_tail = True
     elif abi_type == 'bytes':
         static = False
@@ -57,7 +56,7 @@ def parse_abi_type(abi_type: str) -> AbiType:
         has_tail = True
     elif abi_type == 'address':
         n_bits = 160
-    elif abi_type == 'boolean':
+    elif abi_type == 'bool':
         n_bits = 8
     elif abi_type.startswith('int'):
         n_bits = int(abi_type[3:])

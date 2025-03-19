@@ -94,8 +94,8 @@ def decode_hex_expr(
 
     # preprocess expr
     if padded and abi_type['n_bits'] is not None and abi_type['n_bits'] < 256:
-        if type_name in ['bytes', 'string']:
-            expr = expr.str.slice(int(abi_type['n_bits'] / 4))
+        if type_name.startswith('bytes'):
+            expr = expr.str.slice(0, int(abi_type['n_bits'] / 4))
         else:
             expr = expr.str.slice(int(-abi_type['n_bits'] / 4))
     elif prefix:
@@ -112,7 +112,7 @@ def decode_hex_expr(
         return expr.str.decode('hex').cast(pl.String)
     elif type_name == 'address':
         return _format_binary(expr, hex_output)
-    elif type_name == 'boolean':
+    elif type_name == 'bool':
         return expr.str.slice(-1) != '0'
     elif type_name.startswith('int'):
         return _decode_hex_signed_int(expr, abi_type)
@@ -155,6 +155,8 @@ def _decode_array(
     abi_type: decoding_types.AbiType,
     hex_output: bool = True,
 ) -> pl.Expr:
+    import polars as pl
+
     subtype = abi_type['array_type']
     if subtype is None:
         raise Exception('must specify array type')
@@ -162,15 +164,17 @@ def _decode_array(
         if subtype['has_tail']:
             exprs = []
             for i in range(abi_type['array_length']):
-                offset = _hex_to_int(expr.str.slice(i * 64, 64), pl.UInt64)
+                offset = _hex_to_int(expr.str.slice(i * 64 + 48, 16), pl.UInt64)
                 if subtype['static']:
                     if abi_type['n_bits'] is None:
                         raise Exception('must specify static n_bits')
-                    tail_length: int | pl.Expr = abi_type['n_bits'] // 4
+                    tail_length_bytes: int | pl.Expr = abi_type['n_bits'] // 8
                 else:
-                    tail_length = expr.str.slice(offset)
-                    offset += 1
-                tail_body = expr.str.slice(offset * 2, tail_length * 2)
+                    tail_length_bytes = _hex_to_int(
+                        expr.str.slice(offset + 48, 16), pl.UInt64
+                    )
+                    offset += 32
+                tail_body = expr.str.slice(offset * 2, tail_length_bytes * 2)
                 subexpr = decode_hex_expr(
                     tail_body, subtype, hex_output=hex_output
                 )
@@ -178,7 +182,7 @@ def _decode_array(
         else:
             exprs = [
                 decode_hex_expr(
-                    expr.slice(i * 64, 64), subtype, hex_output=hex_output
+                    expr.str.slice(i * 64, 64), subtype, hex_output=hex_output
                 )
                 for i in range(abi_type['array_length'])
             ]
@@ -217,6 +221,9 @@ def _decode_tuple(
             tail_length = _hex_to_int(
                 expr.str.slice(offset * 2 + 48, 16), pl.UInt64
             )
+            # field = offset
+            # field = expr.str.slice((offset + 32) * 2, 64)
+            # field = expr.str.slice((offset + 32) * 2, tail_length * 2)
             field = decode_hex_expr(
                 expr=expr.str.slice((offset + 32) * 2, tail_length * 2),
                 abi_type=subtype,
