@@ -13,7 +13,7 @@ if typing.TYPE_CHECKING:
         array_length: int | None
         tuple_names: list[str | None] | None
         tuple_types: list[AbiType] | None
-        has_tail: bool
+        has_tail: bool  # when AbiType stored in tuple/array, is it in head?
 
 
 def parse_abi_type(abi_type: str) -> AbiType:
@@ -40,13 +40,19 @@ def parse_abi_type(abi_type: str) -> AbiType:
     # parse by type
     if abi_type.endswith(']'):
         has_tail = True
+        array_type = parse_abi_type(abi_type.rsplit('[', maxsplit=1)[0])
         if not abi_type.endswith('[]'):
             array_length = int(abi_type.rsplit('[', maxsplit=1)[1][:-1])
-        array_type = parse_abi_type(abi_type.rsplit('[', maxsplit=1)[0])
-        static = array_type['static']
+            static = array_type['static']
+            if static:
+                n_bits = array_length * array_type['n_bits']
+        else:
+            static = False
     elif abi_type.endswith(')'):
         tuple_names, tuple_types = _parse_tuple_type(abi_type)
         static = all(subtype['static'] for subtype in tuple_types)
+        if static:
+            n_bits = sum(subtype['n_bits'] for subtype in tuple_types)
         has_tail = True
     elif abi_type == 'bytes':
         static = False
@@ -76,6 +82,9 @@ def parse_abi_type(abi_type: str) -> AbiType:
         n_bits = 192
     else:
         raise Exception('invalid abi type: ' + str(abi_type))
+
+    if static and n_bits is None:
+        raise Exception('must specify static n_bits')
 
     return {
         'name': abi_type,

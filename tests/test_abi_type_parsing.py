@@ -22,7 +22,7 @@ defaults = {
 
 abi_types = {
     'address': {'name': 'address', 'n_bits': 160},
-    'boolean': {'name': 'boolean', 'n_bits': 8},
+    'bool': {'name': 'bool', 'n_bits': 8},
     'string': {'name': 'string', 'static': False, 'has_tail': True},
     'bytes': {'name': 'bytes', 'static': False, 'has_tail': True},
     'function': {'name': 'function', 'n_bits': 192},
@@ -72,17 +72,22 @@ for name, abi_type in list(abi_types.items()):
     array_name = name + '[]'
     abi_types[array_name] = {
         'name': array_name,
-        'static': abi_type['static'],
+        'static': False,
         'array_type': abi_type,
         'has_tail': True,
     }
 
     array_name = name + '[4]'
+    if abi_type['n_bits'] is not None:
+        n_bits = abi_type['n_bits'] * 4
+    else:
+        n_bits = None
     abi_types[array_name] = {
         'name': array_name,
         'static': abi_type['static'],
         'array_type': abi_type,
         'array_length': 4,
+        'n_bits': n_bits,
         'has_tail': True,
     }
 
@@ -113,9 +118,17 @@ for subtypes in piece_sets:
         tuple_name += ')'
         tuple_types = [abi_types[subtype] for subtype in subtypes]
 
+        static = all(tuple_type['static'] for tuple_type in tuple_types)
+        if static:
+            n_bits = sum(tuple_type['n_bits'] for tuple_type in tuple_types)
+        else:
+            n_bits = None
+
         abi_types[tuple_name] = {
             'name': tuple_name,
-            'static': all(tuple_type['static'] for tuple_type in tuple_types),
+            'static': static,
+            'n_bits': n_bits,
+            'has_tail': True,
             'tuple_names': list(names),
             'tuple_types': tuple_types,
         }
