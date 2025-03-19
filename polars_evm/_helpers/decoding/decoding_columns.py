@@ -93,9 +93,8 @@ def decode_hex_expr(
     type_name = abi_type['name']
 
     # preprocess expr
-    if padded:
-        if abi_type['n_bits'] is not None and abi_type['n_bits'] < 256:
-            expr = expr.str.slice(int(-abi_type['n_bits'] / 4))
+    if padded and abi_type['n_bits'] is not None and abi_type['n_bits'] < 256:
+        expr = expr.str.slice(int(-abi_type['n_bits'] / 4))
     elif prefix:
         expr = expr.str.strip_prefix('0x')
 

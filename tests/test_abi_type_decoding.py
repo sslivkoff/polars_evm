@@ -15,21 +15,35 @@ example_values = {
             '0x5b38da6a701c568545dcfcb03fcb875f56beddc4',
             '0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4',
         ),
+        (
+            '0x5b38da6a701c568545dcfcb03fcb875f56beddc4',
+            '0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4',
+        ),
     ],
     'uint': [
         (
-            127,
+            127.0,
             '000000000000000000000000000000000000000000000000000000000000007f',
         ),
         (
-            127,
+            127.0,
+            '0x000000000000000000000000000000000000000000000000000000000000007f',
+        ),
+    ],
+    'uint32': [
+        (
+            127.0,
+            '000000000000000000000000000000000000000000000000000000000000007f',
+        ),
+        (
+            127.0,
             '0x000000000000000000000000000000000000000000000000000000000000007f',
         ),
     ],
     # https://medium.com/coinmonks/abi-encode-and-decode-using-solidity-2d372a03e110
     '(address,uint)': [
         (
-            ('0x5b38da6a701c568545dcfcb03fcb875f56beddc4', 127),
+            ('0x5b38da6a701c568545dcfcb03fcb875f56beddc4', 127.0),
             '0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4000000000000000000000000000000000000000000000000000000000000007f',
         )
     ],
@@ -100,7 +114,10 @@ def decode_values(
     values: typing.Sequence[str], abi_type: str
 ) -> list[typing.Any]:
     df = pl.DataFrame({'as_hex': pl.Series(values, dtype=pl.String)})
-    return df.evm.decode({'as_hex': abi_type})['as_hex_decoded'].to_list()
+    output = df.evm.decode({'as_hex': abi_type})['as_hex_decoded'].to_list()
+    if abi_type.startswith('('):
+        output = [tuple(item.values()) for item in output]
+    return output
 
 
 @pytest.mark.parametrize('test', decoding_tests)
