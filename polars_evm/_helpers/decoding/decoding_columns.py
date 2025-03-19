@@ -94,12 +94,12 @@ def decode_hex_expr(
 
     # preprocess expr
     if padded and abi_type['n_bits'] is not None and abi_type['n_bits'] < 256:
-        expr = expr.str.slice(int(-abi_type['n_bits'] / 4))
+        if type_name in ['bytes', 'string']:
+            expr = expr.str.slice(int(abi_type['n_bits'] / 4))
+        else:
+            expr = expr.str.slice(int(-abi_type['n_bits'] / 4))
     elif prefix:
         expr = expr.str.strip_prefix('0x')
-
-    if padded and type_name in ['bytes', 'string']:
-        raise Exception(type_name + ' cannot be padded, use padded=False')
 
     # decode type
     if type_name.endswith(']'):
@@ -213,10 +213,12 @@ def _decode_tuple(
                 hex_output=hex_output,
             )
         else:
-            offset = _hex_to_int(expr.str.slice(i * 64, 64), pl.UInt64)
-            tail_length = _hex_to_int(expr.str.slice(offset * 2, 64), pl.UInt64)
+            offset = _hex_to_int(expr.str.slice(i * 64 + 48, 16), pl.UInt64)
+            tail_length = _hex_to_int(
+                expr.str.slice(offset * 2 + 48, 16), pl.UInt64
+            )
             field = decode_hex_expr(
-                expr=expr.str.slice((offset + 1) * 2, tail_length * 2),
+                expr=expr.str.slice((offset + 32) * 2, tail_length * 2),
                 abi_type=subtype,
                 padded=True,
                 prefix=False,
