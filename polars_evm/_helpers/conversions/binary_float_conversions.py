@@ -26,9 +26,7 @@ def binary_df_to_float(
             hex_columns[hex_name] = pl.col(column).bin.encode('hex')
             hex_expr = pl.col(hex_name)
         elif column_dtype == pl.String:
-            hex_name = column
-            hex_columns = {}
-            hex_expr = pl.col(hex_name).str.strip_prefix('0x')
+            hex_expr = pl.col(column).str.strip_prefix('0x')
         else:
             raise Exception('invalid column dtype:' + str(column_dtype))
 

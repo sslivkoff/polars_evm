@@ -33,6 +33,24 @@ class DataFrameEvm:
             df=self._df, column_types=column_types, replace=replace
         )
 
+    def decode(
+        self,
+        column_types: dict[str, str | _helpers.AbiType],
+        *,
+        padded: bool = True,
+        prefix: bool = True,
+        hex_output: bool = True,
+        replace: bool = False,
+    ) -> pl.DataFrame:
+        return _helpers.decode_df(
+            df=self._df,
+            column_types=column_types,
+            padded=padded,
+            prefix=prefix,
+            hex_output=hex_output,
+            replace=replace,
+        )
+
     def decode_events(
         self,
         event_abi: dict[str, typing.Any],

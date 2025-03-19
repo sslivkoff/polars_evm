@@ -9,6 +9,67 @@ from .. import conversions
 from . import decoding_types
 
 
+def decode_df(
+    df: pl.DataFrame,
+    column_types: dict[str, str | decoding_types.AbiType],
+    *,
+    padded: bool = True,
+    prefix: bool = True,
+    hex_output: bool = True,
+    replace: bool = False,
+) -> pl.DataFrame:
+    import polars as pl
+
+    hex_exprs = {}
+    decode_exprs = {}
+    schema = df.collect_schema()
+    for name, abi_type in column_types.items():
+        column_dtype = schema.get(name)
+        if column_dtype == pl.String:
+            hex_expr = pl.col(name)
+        elif column_dtype == pl.Binary:
+            hex_name = name + 'as_hex'
+            hex_exprs[hex_name] = pl.col.name.bin.encode('hex')
+            hex_expr = pl.col(hex_name)
+        else:
+            raise Exception('invalid column type')
+
+        if not replace:
+            name = name + '_decoded'
+
+        decode_exprs[name] = decode_hex_expr(
+            hex_expr,
+            abi_type=abi_type,
+            padded=padded,
+            prefix=prefix,
+            hex_output=hex_output,
+        )
+
+    return (
+        df.with_columns(**hex_exprs)
+        .with_columns(**decode_exprs)
+        .drop(*hex_exprs.keys())
+    )
+
+
+def decode_hex_series(
+    series: pl.Series,
+    abi_type: str | decoding_types.AbiType,
+    *,
+    padded: bool = True,
+    prefix: bool = True,
+    hex_output: bool = True,
+) -> pl.Series:
+    expr = decode_hex_expr(
+        pl.col.as_hex,
+        abi_type=abi_type,
+        padded=padded,
+        prefix=prefix,
+        hex_output=hex_output,
+    )
+    return pl.DataFrame({'as_hex': series}).select(decoded=expr)['decoded']
+
+
 def decode_hex_expr(
     expr: pl.Expr,
     abi_type: str | decoding_types.AbiType,
@@ -25,6 +86,8 @@ def decode_hex_expr(
 
     see abi spec here https://docs.soliditylang.org/en/develop/abi-spec.html
     """
+    import polars as pl
+
     if isinstance(abi_type, str):
         abi_type = decoding_types.parse_abi_type(abi_type)
     type_name = abi_type['name']
@@ -130,6 +193,8 @@ def _decode_tuple(
     abi_type: decoding_types.AbiType,
     hex_output: bool = True,
 ) -> pl.Expr:
+    import polars as pl
+
     tuple_names = abi_type['tuple_names']
     tuple_types = abi_type['tuple_types']
     if tuple_types is None:
