@@ -220,6 +220,9 @@ def _decode_tuple(
 ) -> pl.Expr:
     import polars as pl
 
+    if abi_type['name'] == '()':
+        return pl.lit({})
+
     tuple_names = abi_type['tuple_names']
     tuple_types = abi_type['tuple_types']
     if tuple_types is None:

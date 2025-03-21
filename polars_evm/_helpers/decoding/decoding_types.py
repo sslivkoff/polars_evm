@@ -24,7 +24,7 @@ def parse_abi_type(abi_type: str) -> AbiType:
     array_type = None
     array_length = None
     tuple_names = None
-    tuple_types = None
+    tuple_types: list[AbiType] | None = None
     has_tail = False
 
     # replace known synonyms
@@ -51,13 +51,19 @@ def parse_abi_type(abi_type: str) -> AbiType:
         else:
             static = False
     elif abi_type.endswith(')'):
-        tuple_names, tuple_types = _parse_tuple_type(abi_type)
-        static = all(subtype['static'] for subtype in tuple_types)
-        if static:
-            if any(t['n_bits'] is None for t in tuple_types):
-                raise Exception('static tuple n_bits must not be None')
-            n_bits = sum(subtype['n_bits'] for subtype in tuple_types)  # type: ignore
-        has_tail = True
+        if abi_type == '()':
+            tuple_types = []
+            static = True
+            n_bits = 0
+            has_tail = True
+        else:
+            tuple_names, tuple_types = _parse_tuple_type(abi_type)
+            static = all(subtype['static'] for subtype in tuple_types)
+            if static:
+                if any(t['n_bits'] is None for t in tuple_types):
+                    raise Exception('static tuple n_bits must not be None')
+                n_bits = sum(subtype['n_bits'] for subtype in tuple_types)  # type: ignore
+            has_tail = True
     elif abi_type == 'bytes':
         static = False
         has_tail = True
@@ -120,7 +126,7 @@ def _parse_tuple_type(
             search_sum += imbalance
             if search_sum == 0:
                 searching = False
-                pieces.append(''.join(raw_pieces[search_start : (p + 1)]))
+                pieces.append(','.join(raw_pieces[search_start : (p + 1)]))
         else:
             if imbalance > 0:
                 searching = True
