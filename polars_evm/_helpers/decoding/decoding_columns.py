@@ -77,6 +77,7 @@ def decode_hex_expr(
     padded: bool = True,
     prefix: bool = True,
     hex_output: bool = True,
+    max_array_length: int = 128,
 ) -> pl.Expr:
     """
     dynamic types not yet implemented
@@ -93,8 +94,17 @@ def decode_hex_expr(
     type_name = abi_type['name']
 
     # preprocess expr
-    if padded and abi_type['n_bits'] is not None and abi_type['n_bits'] < 256:
+    if (
+        padded
+        and abi_type['n_bits'] is not None
+        and abi_type['n_bits'] < 256
+        and not abi_type['has_tail']
+        and abi_type['name'] != 'bytes'
+        and not abi_type['name'].endswith(']')
+    ):
         if type_name.startswith('bytes'):
+            if prefix:
+                expr = expr.str.strip_prefix('0x')
             expr = expr.str.slice(0, int(abi_type['n_bits'] / 4))
         else:
             expr = expr.str.slice(int(-abi_type['n_bits'] / 4))
@@ -103,11 +113,15 @@ def decode_hex_expr(
 
     # decode type
     if type_name.endswith(']'):
-        return _decode_array(expr, abi_type, hex_output)
+        return _decode_array(expr, abi_type, hex_output, max_array_length)
     elif type_name.endswith(')'):
         return _decode_tuple(expr, abi_type, hex_output)
     elif type_name == 'bytes':
-        return _format_binary(expr, hex_output)
+        if padded:
+            length = _hex_to_int(expr.str.slice(48, 16), pl.UInt64)
+            return _format_binary(expr.slice(64, length * 2), hex_output)
+        else:
+            return _format_binary(expr, hex_output)
     elif type_name == 'string':
         return expr.str.decode('hex').cast(pl.String)
     elif type_name == 'address':
@@ -122,14 +136,14 @@ def decode_hex_expr(
         return _format_binary(expr, hex_output)
     elif type_name.startswith('fixed'):
         f64 = decode_hex_expr(
-            expr, 'int' + str(abi_type['n_bits']), padded=padded
+            expr, 'int' + str(abi_type['n_bits']), padded=False
         )
         if abi_type['fixed_scale'] is None:
             raise Exception('must specify fixed_scale')
         return f64 / (10 ** pl.lit(int(abi_type['fixed_scale'])))
     elif type_name.startswith('ufixed'):
         f64 = decode_hex_expr(
-            expr, 'uint' + str(abi_type['n_bits']), padded=padded
+            expr, 'uint' + str(abi_type['n_bits']), padded=False
         )
         if abi_type['fixed_scale'] is None:
             raise Exception('must specify fixed_scale')
@@ -153,42 +167,50 @@ def _format_binary(expr: pl.Expr, hex_output: bool) -> pl.Expr:
 def _decode_array(
     expr: pl.Expr,
     abi_type: decoding_types.AbiType,
-    hex_output: bool = True,
+    hex_output: bool,
+    max_array_length: int,
 ) -> pl.Expr:
     import polars as pl
 
     subtype = abi_type['array_type']
     if subtype is None:
         raise Exception('must specify array type')
+
+    exprs = []
     if abi_type['array_length'] is not None:
-        if subtype['has_tail']:
-            exprs = []
-            for i in range(abi_type['array_length']):
-                offset = _hex_to_int(expr.str.slice(i * 64 + 48, 16), pl.UInt64)
-                if subtype['static']:
-                    if abi_type['n_bits'] is None:
-                        raise Exception('must specify static n_bits')
-                    tail_length_bytes: int | pl.Expr = abi_type['n_bits'] // 8
-                else:
-                    tail_length_bytes = _hex_to_int(
-                        expr.str.slice(offset + 48, 16), pl.UInt64
-                    )
-                    offset += 32
-                tail_body = expr.str.slice(offset * 2, tail_length_bytes * 2)
-                subexpr = decode_hex_expr(
-                    tail_body, subtype, hex_output=hex_output
-                )
-                exprs.append(subexpr)
-        else:
-            exprs = [
-                decode_hex_expr(
-                    expr.str.slice(i * 64, 64), subtype, hex_output=hex_output
-                )
-                for i in range(abi_type['array_length'])
-            ]
+        array_length = abi_type['array_length']
+        pre_offset = 0
     else:
-        raise NotImplementedError('dynamic arrays')
-    return pl.concat_list(exprs)
+        array_length = max_array_length
+        pre_offset = 64
+    for i in range(array_length):
+        if subtype['has_tail']:
+            offset = _hex_to_int(
+                expr.str.slice(pre_offset + i * 64 + 48, 16), pl.UInt64
+            )
+            if subtype['static']:
+                tail_length_bytes: int | pl.Expr = abi_type['n_bits'] // 8  # type: ignore
+            else:
+                tail_length_bytes = _hex_to_int(
+                    expr.str.slice(pre_offset + offset + 48, 16), pl.UInt64
+                )
+                offset += 32
+            body = expr.str.slice(
+                pre_offset + offset * 2, tail_length_bytes * 2
+            )
+        else:
+            body = expr.str.slice(pre_offset + i * 64, 64)
+        subexpr = decode_hex_expr(body, subtype, hex_output=hex_output)
+        exprs.append(subexpr)
+
+    output = pl.concat_list(exprs)
+
+    if abi_type['array_length'] is None:
+        output = output.list.eval(
+            pl.element().filter(pl.element().is_not_null())
+        )
+
+    return output
 
 
 def _decode_tuple(
@@ -221,13 +243,18 @@ def _decode_tuple(
             tail_length = _hex_to_int(
                 expr.str.slice(offset * 2 + 48, 16), pl.UInt64
             )
-            # field = offset
-            # field = expr.str.slice((offset + 32) * 2, 64)
-            # field = expr.str.slice((offset + 32) * 2, tail_length * 2)
+
+            padded = True
+            if subtype['name'] in ('string', 'bytes'):
+                padded = False
+                offset = offset + 32
+            else:
+                tail_length = (tail_length + 1) * 32
+            data = expr.str.slice(offset * 2, tail_length * 2)
             field = decode_hex_expr(
-                expr=expr.str.slice((offset + 32) * 2, tail_length * 2),
-                abi_type=subtype,
-                padded=True,
+                data,
+                subtype,
+                padded=padded,
                 prefix=False,
                 hex_output=hex_output,
             )

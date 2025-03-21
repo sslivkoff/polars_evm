@@ -45,6 +45,8 @@ def parse_abi_type(abi_type: str) -> AbiType:
             array_length = int(abi_type.rsplit('[', maxsplit=1)[1][:-1])
             static = array_type['static']
             if static:
+                if array_type['n_bits'] is None:
+                    raise Exception('static must specify n_bits')
                 n_bits = array_length * array_type['n_bits']
         else:
             static = False
@@ -52,7 +54,9 @@ def parse_abi_type(abi_type: str) -> AbiType:
         tuple_names, tuple_types = _parse_tuple_type(abi_type)
         static = all(subtype['static'] for subtype in tuple_types)
         if static:
-            n_bits = sum(subtype['n_bits'] for subtype in tuple_types)
+            if any(t['n_bits'] is None for t in tuple_types):
+                raise Exception('static tuple n_bits must not be None')
+            n_bits = sum(subtype['n_bits'] for subtype in tuple_types)  # type: ignore
         has_tail = True
     elif abi_type == 'bytes':
         static = False
