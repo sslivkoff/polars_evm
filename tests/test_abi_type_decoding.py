@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import typing
 import pytest
 import polars as pl
@@ -592,5 +593,20 @@ def _flatten(abi_type, item):
 @pytest.mark.parametrize('test', decoding_tests)
 def test_abi_decoding(test: tuple[str, typing.Any, str]) -> None:
     abi_type, target_output, raw_bytes = test
+
+    parsed_abi_type = polars_evm._helpers.decoding_types.parse_abi_type(
+        abi_type
+    )
+    print(abi_type)
+    print()
+    print(json.dumps(parsed_abi_type, indent=4, sort_keys=True))
+    print()
+    print(
+        '\n'.join(
+            raw_bytes[2:][i * 64 : (i + 1) * 64]
+            for i in range(len(raw_bytes) // 64)
+        )
+    )
+
     actual_output = decode_value(raw_bytes, abi_type)
     assert actual_output == target_output

@@ -77,7 +77,7 @@ def decode_hex_expr(
     padded: bool = True,
     prefix: bool = True,
     hex_output: bool = True,
-    max_array_length: int = 128,
+    max_array_length: int = 32,
 ) -> pl.Expr:
     """
     dynamic types not yet implemented
@@ -274,6 +274,22 @@ def _decode_tuple(
                 expr.str.slice(offset * 2 + 48, 16), pl.UInt64
             )
 
+            # TODO: if tuple contains subtypes with tails, add to tail_length
+            # the offset and subtail length of the last tailed subtype in tuple
+            if (
+                subtype['array_type'] is not None
+                and (subtype['array_type']['has_tail'])
+            ):
+                raise NotImplementedError(
+                    'decoding tuples of arrays: ' + str(abi_type['name'])
+                )
+            if subtype['tuple_types'] is not None and any(
+                tuple_type['has_tail'] for tuple_type in subtype['tuple_types']
+            ):
+                raise NotImplementedError(
+                    'decoding nested dynammic tuples: ' + str(abi_type['name'])
+                )
+
             padded = True
             if subtype['name'] in ('string', 'bytes'):
                 padded = False
@@ -364,4 +380,3 @@ def _decode_hex_unsigned_int(
         return conversions.hex_expr_to_float(expr, 'u' + str(n_bits))
     else:
         raise Exception('invalid number of bits')
-
