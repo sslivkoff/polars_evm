@@ -119,7 +119,7 @@ def decode_hex_expr(
     elif type_name == 'bytes':
         if padded:
             length = _hex_to_int(expr.str.slice(48, 16), pl.UInt64)
-            return _format_binary(expr.slice(64, length * 2), hex_output)
+            return _format_binary(expr.str.slice(64, length * 2), hex_output)
         else:
             return _format_binary(expr, hex_output)
     elif type_name == 'string':
@@ -140,14 +140,14 @@ def decode_hex_expr(
         )
         if abi_type['fixed_scale'] is None:
             raise Exception('must specify fixed_scale')
-        return f64 / (10 ** pl.lit(int(abi_type['fixed_scale'])))
+        return f64 / (10.0 ** pl.lit(int(abi_type['fixed_scale'])))
     elif type_name.startswith('ufixed'):
         f64 = decode_hex_expr(
             expr, 'uint' + str(abi_type['n_bits']), padded=False
         )
         if abi_type['fixed_scale'] is None:
             raise Exception('must specify fixed_scale')
-        return f64 / (10 ** pl.lit(int(abi_type['fixed_scale'])))
+        return f64 / (10.0 ** pl.lit(int(abi_type['fixed_scale'])))
     elif type_name == 'function':
         return pl.struct(
             address=_format_binary(expr.str.slice(-48, 40), hex_output),
@@ -189,7 +189,7 @@ def _decode_array(
                 expr.str.slice(pre_offset + i * 64 + 48, 16), pl.UInt64
             )
             if subtype['static']:
-                tail_length_bytes: int | pl.Expr = abi_type['n_bits'] // 8  # type: ignore
+                tail_length_bytes: int | pl.Expr = subtype['n_bits'] // 8  # type: ignore
             else:
                 tail_length_bytes = _hex_to_int(
                     expr.str.slice(pre_offset + offset + 48, 16), pl.UInt64
@@ -208,12 +208,36 @@ def _decode_array(
     if abi_type['array_length'] is None:
         if subtype['name'].startswith('bytes'):
             output = output.list.eval(pl.element().filter(pl.element() != '0x'))
+        elif subtype['name'].endswith(')'):
+            field_names = _get_tuple_field_names(subtype)
+            output = output.list.eval(
+                pl.element().filter(
+                    pl.element().struct.field(*field_names).null_count()
+                    < len(field_names)
+                )
+            )
         else:
             output = output.list.eval(
                 pl.element().filter(pl.element().is_not_null())
             )
 
     return output
+
+
+def _get_tuple_field_names(abi_type: decoding_types.AbiType) -> list[str]:
+    tuple_types = abi_type['tuple_types']
+    if tuple_types is None:
+        raise Exception('not a tuple type')
+
+    tuple_names = abi_type['tuple_names']
+    if tuple_names is None:
+        tuple_names = [None] * len(tuple_types)
+    output_names = []
+    for i, name in enumerate(tuple_names):
+        if name is None:
+            name = 'field' + str(i)
+        output_names.append(name)
+    return output_names
 
 
 def _decode_tuple(
@@ -340,3 +364,4 @@ def _decode_hex_unsigned_int(
         return conversions.hex_expr_to_float(expr, 'u' + str(n_bits))
     else:
         raise Exception('invalid number of bits')
+
