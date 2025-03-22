@@ -11,6 +11,9 @@ from eth_abi_lite.utils.padding import (
     zpad32_right,
 )
 
+import polars_evm
+
+
 WORD_DESC_RE = re.compile(
     r'^(([0f])<)?([0-9a-f]+)(>([0f]))?( \(([0-9]+) wide\))?$'
 )
@@ -401,8 +404,35 @@ CORRECT_SINGLE_ENCODINGS = CORRECT_TUPLE_ENCODINGS + [
     ('bytes', b'\xde', words('1', 'de>0'), b'\xde'),
 ]
 
+
+def debytify(output):
+    if isinstance(output, bytes):
+        return '0x' + output.hex()
+    elif isinstance(output, (tuple, list)):
+        return type(output)(debytify(item) for item in output)
+    else:
+        return output
+
+
+def fix_types(output, abi_type):
+    if abi_type['array_type'] is not None:
+        return [fix_types(item, abi_type['array_type']) for item in output]
+    elif abi_type['tuple_types'] is not None:
+        return tuple(
+            [
+                fix_types(item, subtype)
+                for item, subtype in zip(output, abi_type['tuple_types'])
+            ]
+        )
+    else:
+        return output
+
+
 tests = []
 for abi_type, target_output, raw_bytes, _ in CORRECT_SINGLE_ENCODINGS:
     if isinstance(target_output, Decimal):
         target_output = float(target_output)
+    target_output = debytify(target_output)
+    abi_type_full = polars_evm._helpers.decoding_types.parse_abi_type(abi_type)
+    target_output = fix_types(target_output, abi_type_full)
     print('   ', str([abi_type, target_output, '0x' + raw_bytes.hex()]) + ',')
