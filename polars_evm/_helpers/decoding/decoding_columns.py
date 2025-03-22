@@ -206,9 +206,12 @@ def _decode_array(
     output = pl.concat_list(exprs)
 
     if abi_type['array_length'] is None:
-        output = output.list.eval(
-            pl.element().filter(pl.element().is_not_null())
-        )
+        if subtype['name'].startswith('bytes'):
+            output = output.list.eval(pl.element().filter(pl.element() != '0x'))
+        else:
+            output = output.list.eval(
+                pl.element().filter(pl.element().is_not_null())
+            )
 
     return output
 
