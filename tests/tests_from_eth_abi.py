@@ -424,6 +424,15 @@ def fix_types(output, abi_type):
                 for item, subtype in zip(output, abi_type['tuple_types'])
             ]
         )
+    elif (
+        (
+            abi_type['name'].startswith('int')
+            or abi_type['name'].startswith('uint')
+        )
+        and not abi_type['name'].endswith(']')
+        and abi_type['n_bits'] > 64
+    ):
+        return float(output)
     else:
         return output
 
