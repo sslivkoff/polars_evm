@@ -7,18 +7,109 @@ from . import decoding_columns
 if typing.TYPE_CHECKING:
     import polars as pl
 
-    T = typing.TypeVar('T', pl.DataFrame, pl.LazyFrame)
-
 
 def decode_events(
-    events: T,
+    events: pl.DataFrame,
+    abi: dict[str, typing.Any] | list[dict[str, typing.Any]],
+    *,
+    columns: list[str] | None = None,
+    drop_raw_columns: bool = True,
+    name_prefix: str | None = None,
+    hex_output: bool = True,
+    ignore_unknown: bool = False,
+    key: typing.Literal['topic0', 'name'] | None = None,
+) -> pl.DataFrame | dict[str, pl.DataFrame]:
+    if isinstance(abi, dict):
+        return _decode_events_event_abi(
+            events=events,
+            event_abi=abi,
+            columns=columns,
+            drop_raw_columns=drop_raw_columns,
+            name_prefix=name_prefix,
+            hex_output=hex_output,
+        )
+    elif isinstance(abi, list):
+        return _decode_events_contract_abi(
+            events=events,
+            contract_abi=abi,
+            columns=columns,
+            drop_raw_columns=drop_raw_columns,
+            name_prefix=name_prefix,
+            hex_output=hex_output,
+            ignore_unknown=ignore_unknown,
+            key=key,
+        )
+    else:
+        raise Exception()
+
+
+def _decode_events_contract_abi(
+    events: pl.DataFrame,
+    contract_abi: list[dict[str, typing.Any]],
+    *,
+    columns: list[str] | None = None,
+    drop_raw_columns: bool = True,
+    name_prefix: str | None = None,
+    hex_output: bool = True,
+    ignore_unknown: bool = False,
+    key: typing.Literal['topic0', 'name'] | None = None,
+) -> dict[str, pl.DataFrame]:
+    import ctc
+    import polars as pl
+
+    events = events.with_columns(
+        data_hex=pl.col.data.bin.encode('hex'),
+    ).with_columns(selector=pl.col.topic0)
+
+    event_abis: list[dict[str, typing.Any]] = [
+        event_abi for event_abi in contract_abi if event_abi['type'] == 'event'
+    ]
+    names = [event_abi['name'] for event_abi in event_abis]
+    topic0s = [
+        bytes.fromhex(ctc.get_event_hash(event_abi)[2:])  # type: ignore
+        for event_abi in event_abis
+    ]
+    abis_by_selector = dict(zip(topic0s, event_abis))
+
+    if ignore_unknown:
+        events = events.filter(pl.col.selector.is_in(topic0s))
+
+    if key is None:
+        if len(names) == len(set(names)):
+            key = 'name'
+        else:
+            key = 'topic0'
+    if key == 'name':
+        keys = names
+    elif key == 'topic0':
+        keys = topic0s
+    else:
+        raise Exception()
+
+    output = {}
+    partitions = events.partition_by('selector', as_dict=True)
+    for df_key, (selector_tuple, sub_events) in zip(keys, partitions.items()):
+        selector: bytes = selector_tuple[0]  # type: ignore
+        output[df_key] = _decode_events_event_abi(
+            events=sub_events,
+            event_abi=abis_by_selector[selector],
+            drop_raw_columns=drop_raw_columns,
+            name_prefix=name_prefix,
+            hex_output=hex_output,
+        )
+
+    return output
+
+
+def _decode_events_event_abi(
+    events: pl.DataFrame,
     event_abi: dict[str, typing.Any],
     *,
     columns: list[str] | None = None,
     drop_raw_columns: bool = True,
     name_prefix: str | None = None,
     hex_output: bool = True,
-) -> T:
+) -> pl.DataFrame:
     import polars as pl
 
     # decide which columns to decode
