@@ -15,7 +15,7 @@ def decode_df(
     *,
     padded: bool = True,
     prefix: bool = True,
-    hex_output: bool = True,
+    hex_output: bool = False,
     replace: bool = False,
 ) -> pl.DataFrame:
     import polars as pl
@@ -58,7 +58,7 @@ def decode_hex_series(
     *,
     padded: bool = True,
     prefix: bool = True,
-    hex_output: bool = True,
+    hex_output: bool = False,
 ) -> pl.Series:
     expr = decode_hex_expr(
         pl.col.as_hex,
@@ -76,7 +76,7 @@ def decode_hex_expr(
     *,
     padded: bool = True,
     prefix: bool = True,
-    hex_output: bool = True,
+    hex_output: bool = False,
     max_array_length: int = 32,
 ) -> pl.Expr:
     """
@@ -243,7 +243,7 @@ def _get_tuple_field_names(abi_type: decoding_types.AbiType) -> list[str]:
 def _decode_tuple(
     expr: pl.Expr,
     abi_type: decoding_types.AbiType,
-    hex_output: bool = True,
+    hex_output: bool = False,
 ) -> pl.Expr:
     import polars as pl
 

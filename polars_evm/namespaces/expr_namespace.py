@@ -32,7 +32,7 @@ class ExprEvm:
         *,
         padded: bool = True,
         prefix: bool = True,
-        hex_output: bool = True,
+        hex_output: bool = False,
     ) -> pl.Expr:
         return _helpers.decode_hex_expr(
             self._expr,

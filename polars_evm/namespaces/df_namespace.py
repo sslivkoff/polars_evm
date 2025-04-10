@@ -39,7 +39,7 @@ class DataFrameEvm:
         *,
         padded: bool = True,
         prefix: bool = True,
-        hex_output: bool = True,
+        hex_output: bool = False,
         replace: bool = False,
     ) -> pl.DataFrame:
         return _helpers.decode_df(
@@ -53,19 +53,35 @@ class DataFrameEvm:
 
     def decode_events(
         self,
-        abi: dict[str, typing.Any] | list[dict[str, typing.Any]],
+        event_abi: dict[str, typing.Any],
         *,
         columns: list[str] | None = None,
         drop_raw_columns: bool = True,
         name_prefix: str | None = None,
-        hex_output: bool = True,
-        ignore_unknown: bool = False,
-        key: typing.Literal['topic0', 'name'] | None = None,
+        hex_output: bool = False,
     ) -> pl.DataFrame | dict[str, pl.DataFrame]:
         return _helpers.decode_events(
             events=self._df,
-            abi=abi,
+            event_abi=event_abi,
             columns=columns,
+            drop_raw_columns=drop_raw_columns,
+            name_prefix=name_prefix,
+            hex_output=hex_output,
+        )
+
+    def decode_contract_events(
+        self,
+        contract_abi: list[dict[str, typing.Any]],
+        *,
+        drop_raw_columns: bool = True,
+        name_prefix: str | None = None,
+        hex_output: bool = False,
+        ignore_unknown: bool = False,
+        key: typing.Literal['topic0', 'name'] | None = None,
+    ) -> dict[str, pl.DataFrame]:
+        return _helpers.decode_contract_events(
+            events=self._df,
+            contract_abi=contract_abi,
             drop_raw_columns=drop_raw_columns,
             name_prefix=name_prefix,
             hex_output=hex_output,
