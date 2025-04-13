@@ -12,6 +12,9 @@ class DataFrameEvm:
     def __init__(self, df: pl.DataFrame):
         self._df = df
 
+    def filter_binary(self, **column_addresses: typing.Any) -> pl.DataFrame:
+        return _helpers.filter_binary(self._df, column_addresses)
+
     def binary_to_hex(
         self, columns: typing.Sequence[str] | None = None, prefix: bool = True
     ) -> pl.DataFrame:

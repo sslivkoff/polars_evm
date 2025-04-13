@@ -12,6 +12,9 @@ class LazyFrameEvm:
     def __init__(self, lf: pl.LazyFrame):
         self._lf = lf
 
+    def filter_binary(self, **column_addresses: typing.Any) -> pl.LazyFrame:
+        return _helpers.filter_binary(self._lf, column_addresses)
+
     def binary_to_hex(
         self, columns: typing.Sequence[str] | None = None, prefix: bool = True
     ) -> pl.LazyFrame:
