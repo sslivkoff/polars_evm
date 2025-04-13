@@ -62,7 +62,7 @@ class DataFrameEvm:
         drop_raw_columns: bool = True,
         name_prefix: str | None = None,
         hex_output: bool = False,
-    ) -> pl.DataFrame | dict[str, pl.DataFrame]:
+    ) -> pl.DataFrame:
         return _helpers.decode_events(
             events=self._df,
             event_abi=event_abi,

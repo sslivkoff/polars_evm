@@ -7,16 +7,18 @@ from . import decoding_columns
 if typing.TYPE_CHECKING:
     import polars as pl
 
+    _T = typing.TypeVar('_T', pl.DataFrame, pl.LazyFrame)
+
 
 def decode_events(
-    events: pl.DataFrame,
+    events: _T,
     event_abi: dict[str, typing.Any],
     *,
     columns: list[str] | None = None,
     drop_raw_columns: bool = True,
     name_prefix: str | None = None,
     hex_output: bool = False,
-) -> pl.DataFrame:
+) -> _T:
     import polars as pl
 
     # decide which columns to decode
