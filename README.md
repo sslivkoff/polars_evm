@@ -101,13 +101,17 @@ Series: 'balance' [f64]
 df.evm.binary_to_hex(prefix=True, columns=None)
 df.evm.hex_to_binary(prefix=True, columns=None)
 df.evm.binary_to_float({'column1': 'u256', 'column2': 'i256'}, replace=False, prefix=True)
+df.evm.filter_binary(column1_name=hex_or_bytes, column2_name=list_of_values)
 df.evm.decode_events(event_abi)
+df.evm.decode_contract_events(event_abi)
 df.evm.decode_transactions(function_abi_or_contract_abi)
 
 # LazyFrame namespace
 lf.evm.binary_to_hex(prefix=True, columns=None)
 lf.evm.hex_to_binary(prefix=True, columns=None)
 lf.evm.binary_to_float({'column1': 'u256', 'column2': 'i256'}, replace=False, prefix=True)
+lf.evm.filter_binary(column1_name=hex_or_bytes, column2_name=list_of_values)
+lf.evm.decode_events(event_abi)
 
 # Series namespace
 series.evm.binary_to_hex(prefix=True)
